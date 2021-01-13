@@ -21,7 +21,11 @@ class SensorStreamHandler() : EventChannel.StreamHandler {
 
     constructor(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding, sensorType: Int) : this() {
         this.context = flutterPluginBinding.applicationContext
-        this.sensorName = if (sensorType == Sensor.TYPE_STEP_COUNTER) "StepCount" else "StepDetection"
+        this.sensorName = when (sensorType) {
+            Sensor.TYPE_STEP_COUNTER -> "StepCount"
+            Sensor.TYPE_LINEAR_ACCELERATION -> "AltStepCount"
+            else -> "StepDetection"
+        }
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         sensor = sensorManager!!.getDefaultSensor(sensorType)
         this.flutterPluginBinding = flutterPluginBinding
@@ -32,9 +36,9 @@ class SensorStreamHandler() : EventChannel.StreamHandler {
             events!!.error("1", "$sensorName not available",
                     "$sensorName is not available on this device");
         } else {
-            sensorEventListener = sensorEventListener(events!!);
+            sensorEventListener = sensorEventListener(events!!, sensorType = sensor!!.type);
             sensorManager!!.registerListener(sensorEventListener,
-                    sensor, SensorManager.SENSOR_DELAY_FASTEST);
+                    sensor, SensorManager.SENSOR_DELAY_GAME);
         }
     }
 

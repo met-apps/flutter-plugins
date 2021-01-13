@@ -11,24 +11,29 @@ import io.flutter.plugin.common.EventChannel
 class PedometerPlugin : FlutterPlugin {
     private lateinit var stepDetectionChannel: EventChannel
     private lateinit var stepCountChannel: EventChannel
+    private lateinit var altStepCountChannel: EventChannel
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         /// Create channels
         stepDetectionChannel = EventChannel(flutterPluginBinding.binaryMessenger, "step_detection")
         stepCountChannel = EventChannel(flutterPluginBinding.binaryMessenger, "step_count")
+        altStepCountChannel = EventChannel(flutterPluginBinding.binaryMessenger, "alt_step_count")
 
         /// Create handlers
         val stepDetectionHandler = SensorStreamHandler(flutterPluginBinding, Sensor.TYPE_STEP_DETECTOR)
         val stepCountHandler = SensorStreamHandler(flutterPluginBinding, Sensor.TYPE_STEP_COUNTER)
+        val altStepCountHandler = SensorStreamHandler(flutterPluginBinding, Sensor.TYPE_LINEAR_ACCELERATION)
 
         /// Set handlers
         stepDetectionChannel.setStreamHandler(stepDetectionHandler)
         stepCountChannel.setStreamHandler(stepCountHandler)
+        altStepCountChannel.setStreamHandler(altStepCountHandler)
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         stepDetectionChannel.setStreamHandler(null)
         stepCountChannel.setStreamHandler(null)
+        altStepCountChannel.setStreamHandler(null)
     }
 
 }
