@@ -10,6 +10,8 @@ class Pedometer {
       const EventChannel('step_detection');
   static const EventChannel _stepCountChannel =
       const EventChannel('step_count');
+  static const EventChannel _altStepCountChannel =
+      const EventChannel('alt_step_count');
 
   static StreamController<PedestrianStatus> _androidPedestrianController =
       StreamController.broadcast();
@@ -60,9 +62,21 @@ class Pedometer {
     return _androidPedestrianController.stream;
   }
 
+  static Future<bool> get hasStepCounter async {
+    var hasPedometer = true;
+    await _stepCountChannel.receiveBroadcastStream().last.catchError(
+        (Object err) =>
+            hasPedometer = !err.toString().contains("not available"));
+    return hasPedometer;
+  }
+
   /// Returns the steps taken since last system boot.
   /// Events may come with a delay.
   static Stream<StepCount> get stepCountStream => _stepCountChannel
+      .receiveBroadcastStream()
+      .map((event) => StepCount._(event));
+
+  static Stream<StepCount> get altStepCountStream => _altStepCountChannel
       .receiveBroadcastStream()
       .map((event) => StepCount._(event));
 }

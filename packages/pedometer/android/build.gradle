@@ -36,8 +36,14 @@ android {
     lintOptions {
         disable 'InvalidPackage'
     }
+    packagingOptions {
+        exclude 'META-INF/*'
+    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation ('com.github.psambit9791:jdsp:0.6.0') {
+        exclude group: "org.apache.maven.surefire", module: "surefire-api"
+    }
 }

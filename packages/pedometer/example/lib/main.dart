@@ -56,13 +56,15 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void initPlatformState() {
+  void initPlatformState() async {
     _pedestrianStatusStream = Pedometer.pedestrianStatusStream;
     _pedestrianStatusStream
         .listen(onPedestrianStatusChanged)
         .onError(onPedestrianStatusError);
 
-    _stepCountStream = Pedometer.stepCountStream;
+    final hasPedometer = await Pedometer.hasStepCounter;
+    _stepCountStream =
+        hasPedometer ? Pedometer.stepCountStream : Pedometer.altStepCountStream;
     _stepCountStream.listen(onStepCount).onError(onStepCountError);
 
     if (!mounted) return;
