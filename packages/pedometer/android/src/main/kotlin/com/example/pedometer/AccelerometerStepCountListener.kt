@@ -1,28 +1,81 @@
 package com.example.pedometer
 
+import android.app.Service
+import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.os.IBinder
 import com.github.psambit9791.jdsp.filter.Butterworth
 import java.util.*
 import kotlin.math.sqrt
 import io.flutter.plugin.common.EventChannel
-import kotlin.concurrent.timerTask
 
-class AccelerometerStepCountListener(private val events: EventChannel.EventSink,
-                                     private val bufferSize: Int = 100): SensorEventListener {
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
+
+// TODO: restart this service when device rebooted but user still wanted it on
+class AccelerometerStepCountListener : SensorEventListener, Service() {
+    private var sensorManager: SensorManager? = null
+    private val notificationChannel = "alt_steps"
+
+    override fun onCreate() {
+        super.onCreate()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(
+                NotificationChannel(
+                    notificationChannel,
+                    "alt_steps", NotificationManager.IMPORTANCE_DEFAULT
+                )
+            )
+        }
+        val notification: Notification = Notification.Builder(this)
+            .setSmallIcon(this.applicationInfo.icon)
+            .setContentTitle("Pedometer: Active")
+            .setContentText("Tracking steps using accelerometer...")
+            .setChannelId(notificationChannel)
+            .build()
+        startForeground(666, notification)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        sensorManager = DataHolder.sensorManager
+        sensorManager!!.registerListener(
+            this,
+            DataHolder.sensor, SensorManager.SENSOR_DELAY_GAME
+        )
+
+        return START_STICKY
+    }
+
+    override fun onBind(p0: Intent?): IBinder? {
+        return null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopForeground(true)
+        sensorManager!!.unregisterListener(this)
+    }
+
+    private val bufferSize: Int = 100 // NOTE: Change below if changing this as well
     private var arrayBuffer: DoubleArray = DoubleArray(bufferSize)
 
     private val c = 1.05
     private val threshold = 1.2
 
     private var tick = 0
-    @Volatile private var stepCount = 0
+    @Volatile
+    private var stepCount = 0
 
     private fun filterBuffer() {
         val samplingFreq = 50.0
         val order = 20
-        val cutoff = 0.2*(samplingFreq*0.5)
+        val cutoff = 0.2 * (samplingFreq * 0.5)
         val filter = Butterworth(arrayBuffer, samplingFreq)
         arrayBuffer = filter.lowPassFilter(order, cutoff)
     }
@@ -65,10 +118,20 @@ class AccelerometerStepCountListener(private val events: EventChannel.EventSink,
             if (tick == 0) { // check buffer every `bufferSize` ticks
                 filterBuffer()
                 checkSteps()
-                events.success(stepCount)
+                DataHolder.events?.success(stepCount)
             }
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+}
+
+object DataHolder {
+    @Volatile
+    var events: EventChannel.EventSink? = null
+
+    @Volatile
+    var sensorManager: SensorManager? = null
+    @Volatile
+    var sensor: Sensor? = null
 }

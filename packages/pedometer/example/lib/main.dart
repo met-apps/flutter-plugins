@@ -8,6 +8,7 @@ String formatDate(DateTime d) {
 }
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized(); // Might not be needed
   runApp(MyApp());
 }
 
@@ -113,6 +114,10 @@ class _MyAppState extends State<MyApp> {
                       ? TextStyle(fontSize: 30)
                       : TextStyle(fontSize: 20, color: Colors.red),
                 ),
+              ),
+              ElevatedButton(
+                onPressed: Pedometer.stopPlatform,
+                child: Text("Stop Alt Counter"),
               )
             ],
           ),
