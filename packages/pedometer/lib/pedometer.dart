@@ -14,7 +14,6 @@ class Pedometer {
       const EventChannel('alt_step_count');
 
   static const platform = const MethodChannel('pedometer/alt_pedometer');
-  static var started = false;
 
   static StreamController<PedestrianStatus> _androidPedestrianController =
       StreamController.broadcast();
@@ -81,19 +80,23 @@ class Pedometer {
 
   /// users of this stream should call `stopPlatform` when they wish to
   /// end step tracking
-  static Stream<StepCount> get altStepCountStream {
-    if (!started) {
-      _startPlatform();
-    }
-    return _altStepCountChannel
+  static Stream<StepCount> get altStepCountStream =>
+    _altStepCountChannel
         .receiveBroadcastStream()
         .map((event) => StepCount._(event));
+
+  static Future<bool> hasPlatformStarted() {
+    try {
+      return platform.invokeMethod('hasPlatformStarted');
+    } on PlatformException catch (e) {
+      print("Couldn't check platform code. ${e.message}");
+    }
+    return null;
   }
 
-  static void _startPlatform() {
+  static void startPlatform() {
     try {
       platform.invokeMethod('startPlatform');
-      started = true;
     } on PlatformException catch (e) {
       print("Couldn't start platform code. ${e.message}");
     }
@@ -102,7 +105,6 @@ class Pedometer {
   static void stopPlatform() {
     try {
       platform.invokeMethod('stopPlatform');
-      started = false;
     } on PlatformException catch (e) {
       print("Couldn't stop platform code. ${e.message}");
     }

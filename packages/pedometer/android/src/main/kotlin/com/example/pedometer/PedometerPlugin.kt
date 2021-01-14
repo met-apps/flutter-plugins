@@ -41,6 +41,9 @@ class PedometerPlugin : FlutterPlugin {
                     )
                     result.success(null)
                 }
+                "hasPlatformStarted" -> {
+                    result.success(DataHolder.started)
+                }
                 else -> result.notImplemented()
             }
         }
