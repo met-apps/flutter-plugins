@@ -64,6 +64,9 @@ class _MyAppState extends State<MyApp> {
         .onError(onPedestrianStatusError);
 
     final hasPedometer = await Pedometer.hasStepCounter;
+    if (!hasPedometer && !await Pedometer.hasPlatformStarted()) {
+      Pedometer.startPlatform();
+    }
     _stepCountStream =
         hasPedometer ? Pedometer.stepCountStream : Pedometer.altStepCountStream;
     _stepCountStream.listen(onStepCount).onError(onStepCountError);

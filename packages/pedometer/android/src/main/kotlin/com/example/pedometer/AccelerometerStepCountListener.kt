@@ -134,4 +134,7 @@ object DataHolder {
     var sensorManager: SensorManager? = null
     @Volatile
     var sensor: Sensor? = null
+
+    @Volatile
+    var started: Boolean = false
 }
