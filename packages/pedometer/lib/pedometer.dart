@@ -13,6 +13,9 @@ class Pedometer {
   static const EventChannel _altStepCountChannel =
       const EventChannel('alt_step_count');
 
+  static const platform = const MethodChannel('pedometer/alt_pedometer');
+  static var started = false;
+
   static StreamController<PedestrianStatus> _androidPedestrianController =
       StreamController.broadcast();
 
@@ -76,9 +79,34 @@ class Pedometer {
       .receiveBroadcastStream()
       .map((event) => StepCount._(event));
 
-  static Stream<StepCount> get altStepCountStream => _altStepCountChannel
-      .receiveBroadcastStream()
-      .map((event) => StepCount._(event));
+  /// users of this stream should call `stopPlatform` when they wish to
+  /// end step tracking
+  static Stream<StepCount> get altStepCountStream {
+    if (!started) {
+      _startPlatform();
+    }
+    return _altStepCountChannel
+        .receiveBroadcastStream()
+        .map((event) => StepCount._(event));
+  }
+
+  static void _startPlatform() {
+    try {
+      platform.invokeMethod('startPlatform');
+      started = true;
+    } on PlatformException catch (e) {
+      print("Couldn't start platform code. ${e.message}");
+    }
+  }
+
+  static void stopPlatform() {
+    try {
+      platform.invokeMethod('stopPlatform');
+      started = false;
+    } on PlatformException catch (e) {
+      print("Couldn't stop platform code. ${e.message}");
+    }
+  }
 }
 
 /// A DTO for steps taken containing the number of steps taken.

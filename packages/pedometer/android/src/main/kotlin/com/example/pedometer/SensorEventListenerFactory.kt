@@ -6,10 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import io.flutter.plugin.common.EventChannel
 
-fun sensorEventListener(events: EventChannel.EventSink, sensorType: Int): SensorEventListener? {
-    if (sensorType == Sensor.TYPE_LINEAR_ACCELERATION) {
-        return AccelerometerStepCountListener(events)
-    }
+fun sensorEventListener(events: EventChannel.EventSink): SensorEventListener? {
     return object : SensorEventListener {
 
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
