@@ -64,6 +64,7 @@ class Pedometer {
     return _androidPedestrianController.stream;
   }
 
+  /// returns true if the (android) device has a step counter
   static Future<bool> get hasStepCounter async {
     var hasPedometer = true;
     await _stepCountChannel.receiveBroadcastStream().last.catchError(
@@ -85,6 +86,7 @@ class Pedometer {
         .receiveBroadcastStream()
         .map((event) => StepCount._(event));
 
+  /// returns true if android service has started
   static Future<bool> hasPlatformStarted() {
     try {
       return platform.invokeMethod('hasPlatformStarted');
@@ -94,6 +96,7 @@ class Pedometer {
     return null;
   }
 
+  /// start the step tracking service on android
   static void startPlatform() {
     try {
       platform.invokeMethod('startPlatform');
@@ -102,6 +105,7 @@ class Pedometer {
     }
   }
 
+  /// stop the step tracking service on android
   static void stopPlatform() {
     try {
       platform.invokeMethod('stopPlatform');

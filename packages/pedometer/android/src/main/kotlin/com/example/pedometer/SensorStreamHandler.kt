@@ -62,7 +62,7 @@ class AltStreamHandler() : EventChannel.StreamHandler {
     }
 
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-        DataHolder.events = events
+        DataHolder.events = MainThreadEventSink(events!!)
     }
 
     override fun onCancel(arguments: Any?) {

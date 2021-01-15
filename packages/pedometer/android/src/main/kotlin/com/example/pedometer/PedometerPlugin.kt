@@ -1,9 +1,11 @@
 package com.example.pedometer
 
+import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import android.os.Build
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
@@ -16,6 +18,7 @@ class PedometerPlugin : FlutterPlugin {
     private lateinit var altStepCountChannel: EventChannel
     private val CHANNEL = "pedometer/alt_pedometer"
 
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         MethodChannel(flutterPluginBinding.getBinaryMessenger(), CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -27,8 +30,14 @@ class PedometerPlugin : FlutterPlugin {
                     DataHolder.sensorManager = mgr
                     DataHolder.sensor = mgr.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
 
-                    val intent = Intent(ctx, AccelerometerStepCountListener::class.java)
-                    ctx.startForegroundService(intent)
+                    val intent = Intent(ctx, AltStepCountService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        ctx.startForegroundService(intent)
+                    } else {
+                        ctx.startService(intent)
+                    }
+
+                    DataHolder.started = true
                     result.success(null)
                 }
                 "stopPlatform" -> {
@@ -36,9 +45,11 @@ class PedometerPlugin : FlutterPlugin {
                     ctx.stopService(
                         Intent(
                             ctx,
-                            AccelerometerStepCountListener::class.java
+                            AltStepCountService::class.java
                         )
                     )
+
+                    DataHolder.started = false
                     result.success(null)
                 }
                 "hasPlatformStarted" -> {
