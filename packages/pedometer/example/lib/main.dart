@@ -8,7 +8,6 @@ String formatDate(DateTime d) {
 }
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized(); // Might not be needed
   runApp(MyApp());
 }
 

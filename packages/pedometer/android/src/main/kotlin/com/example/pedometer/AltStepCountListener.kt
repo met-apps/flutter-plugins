@@ -1,67 +1,16 @@
 package com.example.pedometer
 
-import android.app.Service
-import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.IBinder
+import android.os.Handler
 import com.github.psambit9791.jdsp.filter.Butterworth
-import java.util.*
 import kotlin.math.sqrt
 import io.flutter.plugin.common.EventChannel
+import android.os.Looper
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.os.Build
-
-// TODO: restart this service when device rebooted but user still wanted it on
-class AccelerometerStepCountListener : SensorEventListener, Service() {
-    private var sensorManager: SensorManager? = null
-    private val notificationChannel = "alt_steps"
-
-    override fun onCreate() {
-        super.onCreate()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(
-                NotificationChannel(
-                    notificationChannel,
-                    "alt_steps", NotificationManager.IMPORTANCE_DEFAULT
-                )
-            )
-        }
-        val notification: Notification = Notification.Builder(this)
-            .setSmallIcon(this.applicationInfo.icon)
-            .setContentTitle("Pedometer: Active")
-            .setContentText("Tracking steps using accelerometer...")
-            .setChannelId(notificationChannel)
-            .build()
-        startForeground(666, notification)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        sensorManager = DataHolder.sensorManager
-        sensorManager!!.registerListener(
-            this,
-            DataHolder.sensor, SensorManager.SENSOR_DELAY_GAME
-        )
-
-        return START_STICKY
-    }
-
-    override fun onBind(p0: Intent?): IBinder? {
-        return null
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        stopForeground(true)
-        sensorManager!!.unregisterListener(this)
-    }
-
+class AltStepCountListener : SensorEventListener {
     private val bufferSize: Int = 100 // NOTE: Change below if changing this as well
     private var arrayBuffer: DoubleArray = DoubleArray(bufferSize)
 
@@ -69,6 +18,7 @@ class AccelerometerStepCountListener : SensorEventListener, Service() {
     private val threshold = 1.2
 
     private var tick = 0
+
     @Volatile
     private var stepCount = 0
 
@@ -111,13 +61,15 @@ class AccelerometerStepCountListener : SensorEventListener, Service() {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             val vec = event.values
-            val mag: Double = sqrt( vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2].toDouble())
+            val mag: Double = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2].toDouble())
             arrayBuffer[tick] = mag
 
             tick = (tick + 1) % bufferSize
             if (tick == 0) { // check buffer every `bufferSize` ticks
                 filterBuffer()
                 checkSteps()
+
+                // this needs to run on UIThread so we use [MainThreadEventSink] to post to the main thread
                 DataHolder.events?.success(stepCount)
             }
         }
@@ -128,13 +80,34 @@ class AccelerometerStepCountListener : SensorEventListener, Service() {
 
 object DataHolder {
     @Volatile
-    var events: EventChannel.EventSink? = null
+    var events: MainThreadEventSink? = null
 
     @Volatile
     var sensorManager: SensorManager? = null
+
     @Volatile
     var sensor: Sensor? = null
 
     @Volatile
     var started: Boolean = false
+}
+
+/**
+ * Facilitates sending events on the main thread.
+ */
+class MainThreadEventSink(eventSink: EventChannel.EventSink) : EventChannel.EventSink {
+    private val eventSink: EventChannel.EventSink = eventSink
+    private val handler: Handler = Handler(Looper.getMainLooper())
+
+    override fun success(o: Any?) {
+        handler.post { eventSink.success(o) }
+    }
+
+    override fun error(s1: String, s2: String, o: Any) {
+        handler.post { eventSink.error(s1, s2, o) }
+    }
+
+    override fun endOfStream() {
+        handler.post { eventSink.endOfStream() }
+    }
 }

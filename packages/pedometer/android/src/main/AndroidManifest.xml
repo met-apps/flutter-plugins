@@ -2,6 +2,6 @@
   package="com.example.pedometer">
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <application>
-        <service android:name=".AccelerometerStepCountListener"/>
+        <service android:name=".AltStepCountService"/>
     </application>
 </manifest>
