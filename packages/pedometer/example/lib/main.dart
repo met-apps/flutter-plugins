@@ -56,13 +56,18 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void initPlatformState() {
+  void initPlatformState() async {
     _pedestrianStatusStream = Pedometer.pedestrianStatusStream;
     _pedestrianStatusStream
         .listen(onPedestrianStatusChanged)
         .onError(onPedestrianStatusError);
 
-    _stepCountStream = Pedometer.stepCountStream;
+    final hasPedometer = await Pedometer.hasStepCounter;
+    if (!hasPedometer && !await Pedometer.hasPlatformStarted()) {
+      Pedometer.startPlatform();
+    }
+    _stepCountStream =
+        hasPedometer ? Pedometer.stepCountStream : Pedometer.altStepCountStream;
     _stepCountStream.listen(onStepCount).onError(onStepCountError);
 
     if (!mounted) return;
@@ -111,6 +116,10 @@ class _MyAppState extends State<MyApp> {
                       ? TextStyle(fontSize: 30)
                       : TextStyle(fontSize: 20, color: Colors.red),
                 ),
+              ),
+              ElevatedButton(
+                onPressed: Pedometer.stopPlatform,
+                child: Text("Stop Alt Counter"),
               )
             ],
           ),

@@ -10,6 +10,10 @@ class Pedometer {
       const EventChannel('step_detection');
   static const EventChannel _stepCountChannel =
       const EventChannel('step_count');
+  static const EventChannel _altStepCountChannel =
+      const EventChannel('alt_step_count');
+
+  static const platform = const MethodChannel('pedometer/alt_pedometer');
 
   static StreamController<PedestrianStatus> _androidPedestrianController =
       StreamController.broadcast();
@@ -60,11 +64,55 @@ class Pedometer {
     return _androidPedestrianController.stream;
   }
 
+  /// returns true if the (android) device has a step counter
+  static Future<bool> get hasStepCounter async {
+    var hasPedometer = true;
+    await _stepCountChannel.receiveBroadcastStream().last.catchError(
+        (Object err) =>
+            hasPedometer = !err.toString().contains("not available"));
+    return hasPedometer;
+  }
+
   /// Returns the steps taken since last system boot.
   /// Events may come with a delay.
   static Stream<StepCount> get stepCountStream => _stepCountChannel
       .receiveBroadcastStream()
       .map((event) => StepCount._(event));
+
+  /// events will only arrive if the service has started, so remember to call
+  /// `startPlatform`
+  static Stream<StepCount> get altStepCountStream =>
+    _altStepCountChannel
+        .receiveBroadcastStream()
+        .map((event) => StepCount._(event));
+
+  /// returns true if android service has started
+  static Future<bool> hasPlatformStarted() {
+    try {
+      return platform.invokeMethod('hasPlatformStarted');
+    } on PlatformException catch (e) {
+      print("Couldn't check platform code. ${e.message}");
+    }
+    return null;
+  }
+
+  /// start the step tracking service on android
+  static void startPlatform() {
+    try {
+      platform.invokeMethod('startPlatform');
+    } on PlatformException catch (e) {
+      print("Couldn't start platform code. ${e.message}");
+    }
+  }
+
+  /// stop the step tracking service on android
+  static void stopPlatform() {
+    try {
+      platform.invokeMethod('stopPlatform');
+    } on PlatformException catch (e) {
+      print("Couldn't stop platform code. ${e.message}");
+    }
+  }
 }
 
 /// A DTO for steps taken containing the number of steps taken.
