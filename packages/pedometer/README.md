@@ -1,3 +1,15 @@
+This is a fork of the pedometer library. Documentation is a WIP.
+
+You need to add this to your `android/app/build.gradle` in the `android`
+section if you wish to use this library. It seems to be a fix for some
+common issue involving dependencies, if there is some fix that can be done from
+our side, PRs are welcome.
+``` gradle
+  packagingOptions {
+      exclude 'META-INF/*'
+  }
+```
+
 # pedometer
 
 [![pub package](https://img.shields.io/pub/v/pedometer.svg)](https://pub.dartlang.org/packages/pedometer)
