@@ -79,8 +79,8 @@ class Pedometer {
       .receiveBroadcastStream()
       .map((event) => StepCount._(event));
 
-  /// users of this stream should call `stopPlatform` when they wish to
-  /// end step tracking
+  /// events will only arrive if the service has started, so remember to call
+  /// `startPlatform`
   static Stream<StepCount> get altStepCountStream =>
     _altStepCountChannel
         .receiveBroadcastStream()
