@@ -32,8 +32,8 @@ class Pedometer {
   static Stream<PedestrianStatus> _androidStream(
       Stream<PedestrianStatus> stream) {
     /// Init a timer and a status
-    Timer t;
-    int pedestrianStatus;
+    Timer? t;
+    int? pedestrianStatus;
 
     /// Listen for events on the original stream
     /// Transform these events by using the timer
@@ -42,7 +42,7 @@ class Pedometer {
       /// If the timer has been started, it should be cancelled
       /// to prevent sending out additional 'walking' events
       if (t != null) {
-        t.cancel();
+        t!.cancel();
 
         /// If a previous status was either not set yet, or was 'stopped'
         /// then a 'walking' event should be emitted.
@@ -87,7 +87,7 @@ class Pedometer {
         .map((event) => StepCount._(event));
 
   /// returns true if android service has started
-  static Future<bool> hasPlatformStarted() {
+  static Future<bool?>? hasPlatformStarted() {
     try {
       return platform.invokeMethod('hasPlatformStarted');
     } on PlatformException catch (e) {
@@ -117,7 +117,7 @@ class Pedometer {
 
 /// A DTO for steps taken containing the number of steps taken.
 class StepCount {
-  DateTime _timeStamp;
+  DateTime? _timeStamp;
   int _steps = 0;
 
   StepCount._(dynamic e) {
@@ -127,11 +127,11 @@ class StepCount {
 
   int get steps => _steps;
 
-  DateTime get timeStamp => _timeStamp;
+  DateTime? get timeStamp => _timeStamp;
 
   @override
   String toString() =>
-      'Steps taken: $_steps at ${_timeStamp.toIso8601String()}';
+      'Steps taken: $_steps at ${_timeStamp?.toIso8601String()}';
 }
 
 /// A DTO for steps taken containing a detected step and its corresponding
@@ -146,8 +146,8 @@ class PedestrianStatus {
     _walking: _WALKING
   };
 
-  DateTime _timeStamp;
-  String _status = _UNKNOWN;
+  DateTime? _timeStamp;
+  String? _status = _UNKNOWN;
 
   PedestrianStatus._(dynamic t) {
     int _type = t as int;
@@ -155,10 +155,10 @@ class PedestrianStatus {
     _timeStamp = DateTime.now();
   }
 
-  String get status => _status;
+  String? get status => _status;
 
-  DateTime get timeStamp => _timeStamp;
+  DateTime? get timeStamp => _timeStamp;
 
   @override
-  String toString() => 'Status: $_status at ${_timeStamp.toIso8601String()}';
+  String toString() => 'Status: $_status at ${_timeStamp?.toIso8601String()}';
 }
